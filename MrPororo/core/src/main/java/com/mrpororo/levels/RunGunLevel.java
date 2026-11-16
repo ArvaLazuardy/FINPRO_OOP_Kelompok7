@@ -1,4 +1,3 @@
-
 package com.mrpororo.levels;
 
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -12,6 +11,15 @@ public class RunGunLevel extends Level {
 
     public RunGunLevel() {
         super();
+    }
+
+    @Override
+    public void load() {
+        elapsedTime = 0;
+        isCompleted = false;
+        isPaused = false;
+
+        onStart();
     }
 
     @Override

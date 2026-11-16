@@ -1,5 +1,7 @@
 package com.mrpororo.levels;
 
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+
 public class BossLevel extends Level {
 
     private int bossHealth;
@@ -9,30 +11,39 @@ public class BossLevel extends Level {
     public void load() {
         bossHealth = 100;
         bossDefeated = false;
+
+        elapsedTime = 0;
         isCompleted = false;
+        isPaused = false;
+
+        onStart();
     }
 
     @Override
-    public void update(float delta) {
-        if (isPaused || bossDefeated) {
-            return;
-        }
-
+    protected void updateLevel(float delta) {
         checkBossDefeated();
     }
 
     @Override
-    public void render() {
+    public void render(ShapeRenderer renderer) {
         // Render Boss Level
     }
 
     public boolean checkBossDefeated() {
         if (bossHealth <= 0) {
             bossDefeated = true;
-            isCompleted = true;
+            complete();
         }
 
         return bossDefeated;
+    }
+
+    public void setBossHealth(int bossHealth) {
+        this.bossHealth = bossHealth;
+    }
+
+    public int getBossHealth() {
+        return bossHealth;
     }
 
     @Override
