@@ -11,6 +11,14 @@ import java.util.Map;
 public class AssetManager {
     private static AssetManager instance;
 
+    public static final String WINTER_TILESET = "Snowy winter game tileset.png";
+    public static final String SNOW_GROUND = "snow_ground";
+    public static final String SNOW_PLATFORM = "snow_platform";
+    public static final String SNOW_LEDGE = "snow_ledge";
+    public static final String SNOW_TREE_LEFT = "snow_tree_left";
+    public static final String SNOW_TREE_MIDDLE = "snow_tree_middle";
+    public static final String SNOW_TREE_RIGHT = "snow_tree_right";
+
     private Map<String, TextureRegion> textureRegionMap;
     private Map<String, Animation<TextureRegion>> animationMap;
     private Map<String, Texture> textureMap;
@@ -45,6 +53,16 @@ public class AssetManager {
 
     public void registerRegion(String key, TextureRegion region) {
         textureRegionMap.put(key, region);
+    }
+
+    public void registerPixelRegion(String key, String filename, int x, int y, int width, int height) {
+        Texture sheet = loadTexture(filename);
+        if (sheet == null) return;
+        if (x < 0 || y < 0 || width <= 0 || height <= 0 || x + width > sheet.getWidth() || y + height > sheet.getHeight()) {
+            throw new IllegalArgumentException("Invalid tileset region: " + key);
+        }
+
+        registerRegion(key, new TextureRegion(sheet, x, y, width, height));
     }
 
     public void registerRegionFromSheet(String key, String filename, int tileWidth, int tileHeight, int row, int col) {
@@ -117,6 +135,13 @@ public class AssetManager {
     }
 
     public void init() {
+        registerPixelRegion(SNOW_GROUND, WINTER_TILESET, 78, 1000, 450, 373);
+        registerPixelRegion(SNOW_PLATFORM, WINTER_TILESET, 155, 737, 205, 216);
+        registerPixelRegion(SNOW_LEDGE, WINTER_TILESET, 252, 639, 216, 81);
+        registerPixelRegion(SNOW_TREE_LEFT, WINTER_TILESET, 0, 36, 345, 497);
+        registerPixelRegion(SNOW_TREE_MIDDLE, WINTER_TILESET, 355, 83, 335, 447);
+        registerPixelRegion(SNOW_TREE_RIGHT, WINTER_TILESET, 707, 0, 420, 530);
+
         // registerRegionFromSheet("item_power", "items.png", 16, 16, 0, 0);
         // placeholder
     }
