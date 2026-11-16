@@ -1,65 +1,44 @@
-
 package com.mrpororo.ui;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class FreezeOverlayRenderer {
 
-    private final ShapeRenderer renderer;
+    private float freezeDuration;
+    private boolean isVisible;
 
-    private float alpha;
-    private boolean active;
+    private SpriteBatch batch;
+    private BitmapFont font;
 
     public FreezeOverlayRenderer() {
-        renderer = new ShapeRenderer();
-        alpha = 0f;
-        active = false;
+        freezeDuration = 0;
+        isVisible = false;
+
+        batch = new SpriteBatch();
+        font = new BitmapFont();
     }
 
-    public void setProjectionMatrix(Matrix4 projection) {
-        renderer.setProjectionMatrix(projection);
+    public void show() {
+        isVisible = true;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void hide() {
+        isVisible = false;
     }
 
-    public void update(float delta) {
-        float targetAlpha = active ? 0.28f : 0f;
-
-        alpha += (targetAlpha - alpha) * Math.min(delta * 5f, 1f);
-    }
-
-    public void render(float worldWidth, float worldHeight) {
-        if (alpha <= 0.01f) {
+    public void render() {
+        if (!isVisible) {
             return;
         }
 
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(
-            GL20.GL_SRC_ALPHA,
-            GL20.GL_ONE_MINUS_SRC_ALPHA
-        );
-
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        // Blue translucent freeze overlay
-        renderer.setColor(0.45f, 0.85f, 1f, alpha);
-        renderer.rect(0, 0, worldWidth, worldHeight);
-
-        renderer.end();
-
-        Gdx.gl.glDisable(GL20.GL_BLEND);
-    }
-
-    public boolean isActive() {
-        return active;
+        batch.begin();
+        font.draw(batch, "TIME FROZEN!", 250, 300);
+        batch.end();
     }
 
     public void dispose() {
-        renderer.dispose();
+        font.dispose();
+        batch.dispose();
     }
 }
