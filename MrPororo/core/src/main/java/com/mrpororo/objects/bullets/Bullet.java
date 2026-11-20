@@ -1,44 +1,102 @@
 package com.mrpororo.objects.bullets;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+
 import com.mrpororo.objects.GameObject;
+import com.mrpororo.objects.Collidable;
+import com.mrpororo.objects.patterns.BulletMovementPattern;
 
 public class Bullet extends GameObject {
-    private float vx, vy;
-    private float damage;
-    private BulletType type;
 
+    private BulletType bulletType;
+    private int damage;
+    private float vx;
+    private float vy;
+    private boolean playerBullet;
+    private boolean parryable;
+    private BulletMovementPattern movementPattern;
+
+    /** Constructor kosong untuk object pool (EntityFactory.createBullet()). */
     public Bullet() {
-        super(0, 0, 12, 12, 0, Color.WHITE);
-        active = false;
-        type = BulletType.PLAYER;
+        super(0f, 0f, 16f, 16f, 0f, Color.WHITE);
+        this.active = false;
     }
 
-    public void init(float x, float y, float vx, float vy, float damage, BulletType type) {
-        this.x = x;
-        this.y = y;
+    public Bullet(float x, float y, float vx, float vy, int damage,
+                  BulletType bulletType, boolean playerBullet) {
+        super(x, y, 16f, 16f, (float) Math.hypot(vx, vy), Color.WHITE);
+
         this.vx = vx;
         this.vy = vy;
         this.damage = damage;
-        this.type = type;
-        this.width = 12;
-        this.height = 12;
-        this.color = type == BulletType.PLAYER ? Color.YELLOW
-            : type == BulletType.ENEMY_PARRYABLE ? Color.PINK : Color.RED;
-        active = true;
-        stateTime = 0f;
+        this.bulletType = bulletType;
+        this.playerBullet = playerBullet;
+        this.parryable = false;
     }
 
     @Override
     public void update(float delta) {
         if (!active) return;
+
         super.update(delta);
-        x += vx * delta;
-        y += vy * delta;
+
+        if (movementPattern != null) {
+            movementPattern.move(this, delta);
+        } else {
+            x += vx * delta;
+            y += vy * delta;
+        }
     }
 
-    public boolean isPlayerBullet() { return type == BulletType.PLAYER; }
-    public boolean isParryable() { return type == BulletType.ENEMY_PARRYABLE; }
-    public float getDamage() { return damage; }
-    public BulletType getType() { return type; }
+    @Override
+    public void render(SpriteBatch batch) {
+        super.render(batch);
+    }
+
+    @Override
+    public void onCollision(Collidable other) {
+        // TODO: Handle bullet collision.
+    }
+
+    public void init(float x, float y, float vx, float vy, int damage,
+                     BulletType bulletType, boolean playerBullet) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.speed = (float) Math.hypot(vx, vy);
+        this.damage = damage;
+        this.bulletType = bulletType;
+        this.playerBullet = playerBullet;
+
+        this.active = true;
+        this.stateTime = 0f;
+        this.movementPattern = null;
+        this.parryable = false;
+    }
+
+    /** Overload yang dipakai BulletManager / EntityFactory. */
+    public void init(float x, float y, float vx, float vy, int damage, BulletType type) {
+        init(x, y, vx, vy, damage, type, type == BulletType.PLAYER);
+        this.parryable = (type == BulletType.ENEMY_PARRYABLE);
+    }
+
+    public int getDamage() { return damage; }
+    public BulletType getBulletType() { return bulletType; }
+
+    public float getVx() { return vx; }
+    public float getVy() { return vy; }
+    public void setVx(float vx) { this.vx = vx; }
+    public void setVy(float vy) { this.vy = vy; }
+
+    public boolean isPlayerBullet() { return playerBullet; }
+
+    public boolean isParryable() { return parryable; }
+    public void setParryable(boolean parryable) { this.parryable = parryable; }
+
+    public BulletMovementPattern getMovementPattern() { return movementPattern; }
+    public void setMovementPattern(BulletMovementPattern movementPattern) {
+        this.movementPattern = movementPattern;
+    }
 }
