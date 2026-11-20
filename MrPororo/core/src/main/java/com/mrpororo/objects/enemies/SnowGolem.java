@@ -22,4 +22,3 @@ public class SnowGolem extends Enemy {
 
     }
 }
-`

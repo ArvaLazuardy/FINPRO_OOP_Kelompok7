@@ -74,6 +74,11 @@ public class SoundManager {
         }
     }
 
+    public void stopFreezeAudio() {
+        if (freezeLoop != null) freezeLoop.stop();
+        playSfx("freeze_end");
+    }
+
     public void stopBgm() {
         if (bgm != null) {
             bgm.stop();
@@ -86,10 +91,8 @@ public class SoundManager {
         }
 
         sounds.clear();
-        bgm.dispose();
-        bgm = null;
-        freezeLoop.dispose();
-        freezeLoop = null;
+        if (bgm != null) { bgm.dispose(); bgm = null; }
+        if (freezeLoop != null) { freezeLoop.dispose(); freezeLoop = null; }
     }
 }
 
