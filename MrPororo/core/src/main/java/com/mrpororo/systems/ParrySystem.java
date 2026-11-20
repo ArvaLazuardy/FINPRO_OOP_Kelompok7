@@ -12,7 +12,7 @@ public class ParrySystem {
     private boolean rewardedThisWindow;
 
     public ParrySystem() {
-        this(100f, 25f, 0.20f, 0.50f);
+        this(100f, 15f, 0.20f, 1f);
     }
 
     public ParrySystem(float maxEnergy, float energyPerParry, float parryDuration, float parryCooldown) {
