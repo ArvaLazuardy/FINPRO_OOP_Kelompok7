@@ -1,4 +1,4 @@
-package com.mrpororo.patterns;
+package com.mrpororo.objects.patterns;
 
 import com.mrpororo.objects.bullets.Bullet;
 

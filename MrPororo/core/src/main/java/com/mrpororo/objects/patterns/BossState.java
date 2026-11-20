@@ -1,4 +1,4 @@
-package com.mrpororo.patterns;
+package com.mrpororo.objects.patterns;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.MathUtils;
