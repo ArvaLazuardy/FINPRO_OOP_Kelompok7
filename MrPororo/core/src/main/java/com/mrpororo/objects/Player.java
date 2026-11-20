@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Rectangle;
+import com.mrpororo.systems.SoundManager;
 
 import java.util.List;
 
@@ -87,6 +88,17 @@ public class Player extends GameObject {
         }
     }
 
+    public Rectangle getParryHitbox() {
+        float reach = 15f;
+
+        return new Rectangle(
+            x - reach,
+            y - reach,
+            width + (reach * 2),
+            height + (reach * 2)
+        );
+    }
+
     private void land(float surfaceY) {
         y = surfaceY;
         velocityY = 0f;
@@ -102,6 +114,8 @@ public class Player extends GameObject {
             health = 0;
             destroy();
         }
+
+        SoundManager.getInstance().playPlayerHit();
     }
 
     public void heal(float amount) {

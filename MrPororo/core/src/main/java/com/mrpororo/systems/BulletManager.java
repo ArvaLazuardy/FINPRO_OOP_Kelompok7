@@ -49,8 +49,7 @@ public class BulletManager {
     private void recycleDead(List<Bullet> active, Deque<Bullet> pool, float w, float h) {
         for (int i = active.size() - 1; i >= 0; i--) {
             Bullet b = active.get(i);
-            if (b.isDestroyed() || b.getX() < -40f || b.getX() > w + 40f
-                || b.getY() < -40f || b.getY() > h + 40f) {
+            if (b.isDestroyed() || b.getX() < -40f || b.getX() > w + 40f || b.getY() < -40f || b.getY() > h + 40f) {
                 b.destroy();
                 active.remove(i);
                 pool.push(b);

@@ -9,14 +9,14 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.mrpororo.Main;
 import com.mrpororo.levels.Level;
 import com.mrpororo.levels.RunGunLevel;
 import com.mrpororo.objects.Player;
-import com.mrpororo.systems.AssetManager;
-import com.mrpororo.systems.EntityFactory;
-import com.mrpororo.systems.LevelManager;
+import com.mrpororo.objects.bullets.Bullet;
+import com.mrpororo.systems.*;
 import com.mrpororo.ui.FreezeOverlayRenderer;
 import com.mrpororo.ui.GameHUD;
 
@@ -31,12 +31,19 @@ public class GameScreen implements Screen {
     private final FitViewport viewport;
     private final SpriteBatch batch;
     private final ShapeRenderer shapeRenderer;
+    private final ParrySystem parrySystem;
+    private final TimeManager timeManager;
+    private final BulletManager bulletManager;
+    private final CollisionReferee collisionReferee;
 
     private final LevelManager levelManager;
     private Player player;
 
     private final GameHUD hud;
     private final FreezeOverlayRenderer freezeOverlay;
+
+    private float dummyShootTimer;
+    private float playerShootTimer;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -47,6 +54,12 @@ public class GameScreen implements Screen {
         shapeRenderer = new ShapeRenderer();
 
         AssetManager.getInstance().init(); // daftarkan region tileset sebelum level dibuat
+        SoundManager.getInstance().init();
+
+        parrySystem = new ParrySystem();
+        timeManager = new TimeManager();
+        bulletManager = new BulletManager();
+        collisionReferee = new CollisionReferee();
 
         levelManager = new LevelManager();
         hud = new GameHUD();
@@ -61,6 +74,9 @@ public class GameScreen implements Screen {
     private void loadLevel(LevelManager.LevelType type) {
         levelManager.load(type);
         respawnPlayer();
+        parrySystem.reset();
+        timeManager.reset();
+        bulletManager.clear();
     }
 
     private void respawnPlayer() {
@@ -78,9 +94,41 @@ public class GameScreen implements Screen {
 
         handleDebugKeys();
 
+        boolean wasFrozen = timeManager.isFrozen();
+        float enemyDelta = timeManager.getEnemyDelta(delta);
+        if (wasFrozen && !timeManager.isFrozen()) SoundManager.getInstance().stopFreezeAudio();
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
+            parrySystem.beginParry();
+            SoundManager.getInstance().startParry();
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.Q) && parrySystem.isMeterFull() && timeManager.activateFreeze()) {
+            parrySystem.consumeFullMeter();
+            SoundManager.getInstance().startFreezeAudio();
+        }
+
+        // TEMPORARY BULLET TESTING
+        if (levelManager.getCurrentType() == LevelManager.LevelType.TEST) {
+            dummyShootTimer -= enemyDelta;
+            if (dummyShootTimer <= 0f) {
+                bulletManager.spawnEnemyBullet(850f, 117f, -190f, 0f, 10, true);
+                dummyShootTimer = 2f;
+            }
+        }
+
         // ---- UPDATE ----
         level.update(dt);
         player.update(dt, level.getPlatforms());
+        parrySystem.update(delta);
+        timeManager.update(delta);
+
+        bulletManager.update(delta, enemyDelta, level.getWorldWidth(), level.getWorldHeight());
+        if (collisionReferee.resolveParries(player.getParryHitbox(), bulletManager.getActiveEnemyBullets(), parrySystem)) {
+            SoundManager.getInstance().successfulParry();
+        }
+        collisionReferee.resolvePlayerHits(player, bulletManager.getActiveEnemyBullets());
+        bulletManager.cleanup(level.getWorldWidth(), level.getWorldHeight());
 
         if (player.getY() < -200f) respawnPlayer(); // jatuh keluar dunia
 
@@ -96,24 +144,8 @@ public class GameScreen implements Screen {
 
         updateCamera();
 
-        // ---- RENDER ----
-        Color bg = level.getBackgroundColor();
-        Gdx.gl.glClearColor(bg.r, bg.g, bg.b, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        viewport.apply();
-        batch.setProjectionMatrix(camera.combined);
-        shapeRenderer.setProjectionMatrix(camera.combined);
-
-        level.render(batch, shapeRenderer); // level mengurus begin/end sendiri
-
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        player.render(shapeRenderer);
-        drawPlayerHealth();
-        shapeRenderer.end();
-
-        hud.render();
-        freezeOverlay.render();
+        // Render
+        renderWorld();
     }
 
     private void drawPlayerHealth() {
@@ -135,6 +167,40 @@ public class GameScreen implements Screen {
         camera.position.x = worldWidth <= VIEW_WIDTH ? half : MathUtils.clamp(targetX, half, worldWidth - half);
         camera.position.y = VIEW_HEIGHT / 2f;
         camera.update();
+    }
+
+    private void renderWorld() {
+        Level level = levelManager.getCurrentLevel();
+        Color bg = level.getBackgroundColor();
+        Gdx.gl.glClearColor(bg.r, bg.g, bg.b, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        viewport.apply();
+        batch.setProjectionMatrix(camera.combined);
+        shapeRenderer.setProjectionMatrix(camera.combined);
+
+        level.render(batch, shapeRenderer); // level mengurus begin/end sendiri
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        player.render(shapeRenderer);
+        drawPlayerHealth();
+
+        if (parrySystem.isParryActive()) {
+            shapeRenderer.setColor(Color.PINK);
+            Rectangle h = player.getParryHitbox();
+            shapeRenderer.rect(h.x, h.y, h.width, h.height);
+        }
+
+        for (Bullet bullet : bulletManager.getActiveEnemyBullets()) {
+            if (bullet.isDestroyed()) continue;
+            shapeRenderer.setColor(bullet.getColor());
+            shapeRenderer.rect(bullet.getX(), bullet.getY(), bullet.getWidth(), bullet.getHeight());
+        }
+
+        shapeRenderer.end();
+
+        hud.render(batch, shapeRenderer, player, parrySystem, timeManager, levelManager.getCurrentType().name());
+        freezeOverlay.render();
     }
 
     private void handleDebugKeys() {
