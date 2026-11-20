@@ -24,11 +24,13 @@ public class BossLevel extends Level {
     @Override
     public void render() {
         // Render Boss Level
+
+
     }
 
     public boolean checkBossDefeated() {
         if (bossHealth <= 0) {
-            bossDefeated = true;
+            bossnDefeated = true;
             isCompleted = true;
         }
 
