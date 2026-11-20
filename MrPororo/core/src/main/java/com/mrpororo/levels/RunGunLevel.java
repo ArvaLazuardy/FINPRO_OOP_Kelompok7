@@ -1,72 +1,62 @@
 package com.mrpororo.levels;
 
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.mrpororo.systems.AssetManager;
+import com.mrpororo.systems.EntityFactory;
+import com.mrpororo.objects.Platform;
 
+// temporary place
 public class RunGunLevel extends Level {
-
-    private static final float WORLD_WIDTH = 960f;
-    private static final float GROUND_HEIGHT = 88f;
-
-    private float levelDuration = 120f;
-
-    public RunGunLevel() {
-        super();
-    }
+    private static final float FINISH_X = 2420f;
 
     @Override
     public void load() {
-        elapsedTime = 0;
-        isCompleted = false;
-        isPaused = false;
-
-        onStart();
-    }
-
-    @Override
-    protected void onStart() {
-        // Reset kondisi khusus Run Gun Level.
-    }
-
-    @Override
-    protected void updateLevel(float delta) {
-        if (getElapsedTime() >= levelDuration) {
-            complete();
+        resetLevel();
+        worldWidth = 2600f;
+        spawnX = 70f;
+        spawnY = 145f;
+        for (int x = 0; x < 2600; x += 260) {
+            platforms.add(EntityFactory.createPlatform(x, 0f, 260f, 92f, AssetManager.SNOW_GROUND));
         }
+        addLedge(265, 190, 200);
+        addLedge(590, 260, 185);
+        addLedge(950, 180, 210);
+        addLedge(1300, 265, 200);
+        addLedge(1710, 195, 205);
+        addLedge(2070, 260, 180);
+    }
+    private void addLedge(float x, float y, float width) {
+        platforms.add(EntityFactory.createPlatform(x, y, width, 25f, AssetManager.SNOW_LEDGE));
     }
 
     @Override
-    public void render(ShapeRenderer renderer) {
+    public Color getBackgroundColor() { return new Color(0.54f, 0.77f, 0.94f, 1f); }
+
+    @Override
+    public void render(SpriteBatch batch, ShapeRenderer renderer) {
+        AssetManager assets = AssetManager.getInstance();
+        batch.begin();
+
+        for (int i = 0; i < 7; i++) {
+            String key = i % 2 == 0 ? AssetManager.SNOW_TREE_LEFT : AssetManager.SNOW_TREE_MIDDLE;
+            if (assets.getRegion(key) != null) {
+                batch.setColor(1f, 1f, 1f, 0.75f);
+                batch.draw(assets.getRegion(key), i * 420f + 40f, 80f, 270f, 310f);
+                batch.setColor(Color.WHITE);
+            }
+        }
+        for (Platform p : platforms) p.render(batch);
+        batch.end();
+
         renderer.begin(ShapeRenderer.ShapeType.Filled);
-
-        // Snowy ground
-        renderer.setColor(0.80f, 0.92f, 0.98f, 1f);
-        renderer.rect(0, 0, WORLD_WIDTH, GROUND_HEIGHT);
-
-        // Snow surface
-        renderer.setColor(0.95f, 0.99f, 1f, 1f);
-        renderer.rect(0, GROUND_HEIGHT - 12f,
-            WORLD_WIDTH, 12f);
-
-        // Floating platforms
-        renderer.setColor(0.70f, 0.88f, 0.94f, 1f);
-        renderer.rect(200, 160, 180, 20);
-        renderer.rect(480, 230, 180, 20);
-        renderer.rect(730, 160, 140, 20);
-
+        renderer.setColor(Color.GOLD);
+        renderer.rect(FINISH_X, 92f, 8f, 175f);
         renderer.end();
     }
 
-    public float getLevelDuration() {
-        return levelDuration;
-    }
-
-    public float getProgress() {
-        return Math.min(getElapsedTime() / levelDuration, 1f);
-    }
-
-    public void setLevelDuration(float duration) {
-        if (duration > 0) {
-            levelDuration = duration;
-        }
+    public void checkFinish(float playerX) {
+        if (playerX >= FINISH_X) complete();
     }
 }
