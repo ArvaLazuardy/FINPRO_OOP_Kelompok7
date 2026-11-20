@@ -200,7 +200,7 @@ public class GameScreen implements Screen {
         shapeRenderer.end();
 
         hud.render(batch, shapeRenderer, player, parrySystem, timeManager, levelManager.getCurrentType().name());
-        freezeOverlay.render();
+        freezeOverlay.render(shapeRenderer, timeManager.isFrozen(), timeManager.getRemainingTime());
     }
 
     private void handleDebugKeys() {
