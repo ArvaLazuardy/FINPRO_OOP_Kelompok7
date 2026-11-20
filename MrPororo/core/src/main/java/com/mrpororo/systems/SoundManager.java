@@ -14,6 +14,7 @@ public class SoundManager {
     private final Random random = new Random();
     private Music bgm;
     private Music freezeLoop;
+    private long parryaudioId = 0;
 
     public static SoundManager getInstance() {
         if (instance == null) {
@@ -38,9 +39,15 @@ public class SoundManager {
         // loadBgm("audio/BGM_Flowering Night.mp3");
         // placeholder
 
+        loadSound("parry_start", "audio/melee_parry_start.mp3");
         loadSound("parry_success", "audio/melee_parry_success.mp3");
         loadSound("freeze_start", "audio/time_freeze_start.mp3");
         loadSound("freeze_end", "audio/time_freeze_end.mp3");
+
+        loadSound("player_hit1", "audio/player_hit_1.mp3");
+        loadSound("player_hit2", "audio/player_hit_2.mp3");
+        loadSound("player_hit3", "audio/player_hit_3.mp3");
+
 
         if (freezeLoop == null && Gdx.files != null && Gdx.audio != null && Gdx.files.internal("audio/time_freeze_duration.mp3").exists()) {
             freezeLoop = Gdx.audio.newMusic(Gdx.files.internal("audio/time_freeze_duration.mp3"));
@@ -62,15 +69,34 @@ public class SoundManager {
         if (freezeLoop != null) freezeLoop.play();
     }
 
-    // random death noise
-    public void playDeath() {
+    // random hit noise
+    public void playPlayerHit() {
         int number = random.nextInt(2) + 1;
-        playSfx("death" + number);
+        playSfx("player_hit" + number);
     }
 
     public void playBgm() {
         if (bgm != null && !bgm.isPlaying()) {
             bgm.play();
+        }
+    }
+
+    public void startParry() {
+        Sound sound = sounds.get("parry_start");
+
+        if (sound != null) {
+            sound.play(0.4f);
+            parryaudioId = -1;
+        }
+    }
+
+    public void successfulParry() {
+        Sound sound = sounds.get("parry_success");
+
+        if (sound != null && parryaudioId != 0) {
+            sound.stop(parryaudioId);
+            sound.play(0.4f);
+            parryaudioId = 0;
         }
     }
 
