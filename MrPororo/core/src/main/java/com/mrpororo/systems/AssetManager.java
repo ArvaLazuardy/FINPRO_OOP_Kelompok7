@@ -41,11 +41,12 @@ public class AssetManager {
             return textureMap.get(filename);
         }
 
-        if (Gdx.files == null &&  Gdx.files.internal(filename).exists()) {
+        if (Gdx.files == null || !Gdx.files.internal(filename).exists()) {
             return null;
         }
 
         Texture texture = new Texture(Gdx.files.internal(filename));
+        texture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         textureMap.put(filename, texture);
 
         return texture;
