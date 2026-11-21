@@ -99,8 +99,7 @@ public class GameScreen implements Screen {
         if (wasFrozen && !timeManager.isFrozen()) SoundManager.getInstance().stopFreezeAudio();
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
-            parrySystem.beginParry();
-            SoundManager.getInstance().startParry();
+            if (parrySystem.beginParry()) SoundManager.getInstance().startParry();
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.Q) && parrySystem.isMeterFull() && timeManager.activateFreeze()) {
