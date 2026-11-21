@@ -4,6 +4,8 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.mrpororo.objects.Platform;
+import com.mrpororo.objects.enemies.SnowGolem;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -17,6 +19,8 @@ public abstract class Level {
     protected float worldHeight = 540f;
     protected float spawnX = 65f;
     protected float spawnY = 140f;
+
+    protected float enemyDelta;
 
     public abstract void load();
     protected void resetLevel() {
@@ -48,4 +52,7 @@ public abstract class Level {
     public void pause() { isPaused = true; }
     public void resume() { isPaused = false; }
     public void dispose() {}
+
+    public void setEnemyDelta(float enemyDelta) { this.enemyDelta = enemyDelta; }
+    public SnowGolem getBoss() { return null; } // di-override TestLevel & BossLevel
 }

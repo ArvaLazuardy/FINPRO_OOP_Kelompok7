@@ -19,6 +19,7 @@ import com.mrpororo.objects.bullets.Bullet;
 import com.mrpororo.systems.*;
 import com.mrpororo.ui.FreezeOverlayRenderer;
 import com.mrpororo.ui.GameHUD;
+import com.mrpororo.objects.enemies.SnowGolem;
 
 public class GameScreen implements Screen {
 
@@ -35,6 +36,10 @@ public class GameScreen implements Screen {
     private final TimeManager timeManager;
     private final BulletManager bulletManager;
     private final CollisionReferee collisionReferee;
+
+
+
+
 
     private final LevelManager levelManager;
     private Player player;
@@ -107,7 +112,10 @@ public class GameScreen implements Screen {
             SoundManager.getInstance().startFreezeAudio();
         }
 
+        // NOTICE ME SENPAI!
+        // DUMMY INI GW NONAKTIFIN DULU YH BUAT TEST ATTACK PATTERN.
         // TEMPORARY BULLET TESTING
+        /*
         if (levelManager.getCurrentType() == LevelManager.LevelType.TEST) {
             dummyShootTimer -= enemyDelta;
             if (dummyShootTimer <= 0f) {
@@ -115,8 +123,13 @@ public class GameScreen implements Screen {
                 dummyShootTimer = 2f;
             }
         }
+        */
 
-        // ---- UPDATE ----
+
+        //  UPDATE!
+        SnowGolem boss = level.getBoss();
+        if (boss != null) boss.bind(bulletManager, player, level.getWorldWidth(), level.getWorldHeight());
+        level.setEnemyDelta(Math.min(enemyDelta, 1f / 30f));
         level.update(dt);
         player.update(dt, level.getPlatforms());
         parrySystem.update(delta);

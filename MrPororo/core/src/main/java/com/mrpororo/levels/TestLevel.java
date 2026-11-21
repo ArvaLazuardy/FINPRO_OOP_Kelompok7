@@ -39,7 +39,7 @@ public class TestLevel extends Level {
     @Override
     protected void updateLevel(float delta) {
         if (boss == null) return;
-        boss.update(delta);
+        boss.update(enemyDelta);
 
         // debug: H = boss kena 10 damage (Phase 2 saat HP <= 50%)
         if (Gdx.input.isKeyJustPressed(Input.Keys.H)) boss.takeDamage(10);
