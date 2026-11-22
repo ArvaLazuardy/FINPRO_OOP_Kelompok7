@@ -6,9 +6,11 @@ import com.badlogic.gdx.graphics.Color;
 public class PhaseTwoState extends BossState {
 
     public PhaseTwoState() {
-        // TODO: addAttack(new FloorSpikeAttack());
-        // TODO: addAttack(new HomingIceBreathAttack());
-        // TODO: attack ketiga (menyusul)
+
+        addAttack(new FloorSpikeAttack());
+        addAttack(new HomingSpikeRainAttack());
+        addAttack(new IceShardAttack());
+        addAttack(new SlowHomingAttack());
     }
 
     @Override public String getName() { return "PHASE 2"; }

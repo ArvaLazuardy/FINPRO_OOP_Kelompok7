@@ -35,6 +35,8 @@ public abstract class BossAttackPattern {
         if (finished) return;
         timer += delta;
         onUpdate(boss, delta);
+        if (finished) onFinish(boss);
+
     }
 
     protected void onStart(SnowGolem boss) { }
@@ -60,4 +62,6 @@ public abstract class BossAttackPattern {
     public float getCooldownAfter() { return cooldownAfter; }
 
     public abstract String getName();
+
+    protected void onFinish(SnowGolem boss) { }
 }

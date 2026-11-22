@@ -17,6 +17,11 @@ public class Bullet extends GameObject {
     private boolean parryable;
     private BulletMovementPattern movementPattern;
 
+    // THESE LINES ARE FOR PHASE 2
+    private boolean harmless;
+
+
+
     /** Constructor kosong untuk object pool (EntityFactory.createBullet()). */
     public Bullet() {
         super(0f, 0f, 16f, 16f, 0f, Color.WHITE);
@@ -99,4 +104,8 @@ public class Bullet extends GameObject {
     public void setMovementPattern(BulletMovementPattern movementPattern) {
         this.movementPattern = movementPattern;
     }
+
+    // PHASE 2 Harmless GETTER & SETTER
+    public boolean isHarmless() { return harmless; }
+    public void setHarmless(boolean harmless) { this.harmless = harmless; }
 }

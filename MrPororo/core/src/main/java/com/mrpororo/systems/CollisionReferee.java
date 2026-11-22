@@ -24,7 +24,7 @@ public class CollisionReferee {
         Rectangle playerBounds = player.getCoreHitbox();
         boolean hit = false;
         for (Bullet bullet : enemyBullets) {
-            if (bullet.isDestroyed() || !playerBounds.overlaps(bullet.getCoreHitbox())) continue;
+            if (bullet.isDestroyed() || bullet.isHarmless() || !playerBounds.overlaps(bullet.getCoreHitbox())) continue;
             player.takeDamage(bullet.getDamage());
             bullet.destroy();
             hit = true;

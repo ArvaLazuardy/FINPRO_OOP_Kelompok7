@@ -77,4 +77,17 @@ public class SnowGolem extends Enemy {
     /** Titik keluar proyektil (sisi kiri badan boss). */
     public float getShootX() { return x - 10f; }
 
+
+
+    // PHASE 2 FLOOR SPIKE POSE, HERE!
+    public float getCenterX() { return x + width / 2f; }
+    public float getCenterY() { return y + height / 2f; }
+
+    public void setPoseVisual(String key, Color placeholderColor) {
+        setPhaseVisual(key, placeholderColor);
+    }
+    public void resetPose() {
+        if (currentState != null)
+            setPhaseVisual(currentState.getSpriteKey(), currentState.getPlaceholderColor());
+    }
 }
