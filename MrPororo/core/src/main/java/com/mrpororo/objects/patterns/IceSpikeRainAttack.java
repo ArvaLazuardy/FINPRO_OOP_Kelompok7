@@ -32,6 +32,7 @@ public class IceSpikeRainAttack extends BossAttackPattern {
         float w = 26f, h = 56f;
         float x = MathUtils.random(0f, boss.getWorldWidth() - w);
         float y = boss.getWorldHeight() - h - 20f;
+        // NOTICE ME (PARRY)! this SPIKE PARRYABLE STATE IS  ROLLED!
         Bullet b = spawnBullet(boss, x, y, 0f, 0f, DAMAGE, rollParryable(), w, h);
         b.setMovementPattern(new FallingSpikeMovement(HOVER, FALL_SPEED, boss.getGroundY()));
     }

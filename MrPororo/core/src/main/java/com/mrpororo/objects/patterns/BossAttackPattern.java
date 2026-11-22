@@ -12,6 +12,9 @@ public abstract class BossAttackPattern {
     protected static final float PARRY_CHANCE = 0.25f;
 
     private static final Color ICE_COLOR = new Color(0.55f, 0.9f, 1f, 1f);
+
+    //ARVA NOTICE ME!! (PARRY) INI WARNA PROJECTILE PARRY
+    // BOLEH GANTI PARRYABLE ATTACK DI SINI. ATAU BIKIN SENDIRI BISA. HHE
     private static final Color PARRY_COLOR = Color.PINK;
 
     protected float timer;
@@ -37,6 +40,8 @@ public abstract class BossAttackPattern {
     protected void onStart(SnowGolem boss) { }
     protected abstract void onUpdate(SnowGolem boss, float delta);
 
+    // NOTICE ME (PARRY)! METHOD INI NENTUIN PARRYABLE BUAT BULLET.
+    // see BulletManager.spawnEvemyBullet() for more info tentang parameter "parryable"
     protected Bullet spawnBullet(SnowGolem boss, float x, float y, float vx, float vy, int damage,
                                 boolean parryable, float w,  float h) {
         Bullet b  = boss.getBulletManager().spawnEnemyBullet(x, y, vx, vy, damage, parryable);
@@ -46,6 +51,7 @@ public abstract class BossAttackPattern {
         return b;
     }
 
+    // ARVA NOTICE ME (PARRY)! Dipanggil di tiaps attack untuk mengacak "UNDIAN" parryable.
     public boolean rollParryable() {
         return MathUtils.randomBoolean(PARRY_CHANCE);
     }

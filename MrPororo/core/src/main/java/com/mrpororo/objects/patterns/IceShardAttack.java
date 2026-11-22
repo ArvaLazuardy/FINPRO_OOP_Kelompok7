@@ -22,6 +22,7 @@ public class IceShardAttack extends BossAttackPattern {
         if (fired < SHOTS && timer >= WINDUP + fired * INTERVAL) {
             float g = boss.getGroundY();
             float y = MathUtils.random(g + 8f, g + 260f); // y acak, masih terjangkau lompat
+            // NOTICE ME! (PARRY) ROLL PARRYABLE JUGA!
             spawnBullet(boss, boss.getShootX(), y, -SPEED, 0f, DAMAGE, rollParryable(), 44f, 14f);
             fired++;
         }
