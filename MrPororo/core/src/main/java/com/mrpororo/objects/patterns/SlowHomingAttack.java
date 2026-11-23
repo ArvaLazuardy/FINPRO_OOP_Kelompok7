@@ -47,8 +47,8 @@ public class SlowHomingAttack extends BossAttackPattern {
     }
 
     private void spawnHoming(SnowGolem boss, float y) {
-        // NOTEICE ME! (PARRY) HOMING ALWAYS PARRYABLE! NO ROLL
-        Bullet orb = spawnBullet(boss, boss.getShootX(), y, -SPEED, 0f, DAMAGE, true, 30f, 30f);
+        // NOTEICE ME! (PARRY) HOMING  PARRYABLE IS ADJUSTABLE! NO ROLL
+        Bullet orb = spawnBullet(boss, boss.getShootX(), y, -SPEED, 0f, DAMAGE, false, 30f, 30f);
         orb.setMovementPattern(new HomingMovement(boss.getTarget(), SPEED, TURN_RATE, LIFETIME));
     }
 

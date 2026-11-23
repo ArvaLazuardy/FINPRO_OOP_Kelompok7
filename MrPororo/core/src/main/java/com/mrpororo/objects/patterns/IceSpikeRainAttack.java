@@ -10,7 +10,7 @@ public class IceSpikeRainAttack extends BossAttackPattern {
     private static final float INTERVAL = 0.35f;
     private static final float HOVER = 0.7f;       // spike diam dulu = peringatan
     private static final float FALL_SPEED = 430f;
-    private static final int DAMAGE = 15;
+    private static final int DAMAGE = 1;
 
     private int spawned;
 

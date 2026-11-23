@@ -79,6 +79,7 @@ public class Bullet extends GameObject {
         this.stateTime = 0f;
         this.movementPattern = null;
         this.parryable = false;
+        this.harmless = false;
     }
 
     /** Overload yang dipakai BulletManager / EntityFactory. */
