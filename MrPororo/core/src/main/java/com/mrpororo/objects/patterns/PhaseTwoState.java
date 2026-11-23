@@ -11,6 +11,7 @@ public class PhaseTwoState extends BossState {
         addAttack(new HomingSpikeRainAttack());
         addAttack(new IceShardAttack());
         addAttack(new SlowHomingAttack());
+        addAttack(new RingShotAttack());
     }
 
     @Override public String getName() { return "PHASE 2"; }

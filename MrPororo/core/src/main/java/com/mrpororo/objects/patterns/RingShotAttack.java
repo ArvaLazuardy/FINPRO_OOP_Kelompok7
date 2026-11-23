@@ -7,14 +7,14 @@ import com.mrpororo.objects.enemies.SnowGolem;
 // Ring of bullets with a gap so player can doge + 1 parryable bullet
 public class RingShotAttack extends BossAttackPattern {
     private static final int RINGS = 3;
-    private static final int BULLETS_PER_RING = 24;
-    private static final int GAP_BULLETS = 3;          // jumlah peluru yang dihapus untuk gap
-    private static final float GAP_AIM_JITTER_DEG = 30f; // gap ~ to  player +- jitter
+    private static final int BULLETS_PER_RING = 40;
+    private static final int GAP_BULLETS = 0;          // jumlah peluru yang dihapus untuk gap
+    private static final float GAP_AIM_JITTER_DEG = 1f; // gap ~ to  player +- jitter
     private static final float WINDUP = 0.9f;
     private static final float INTERVAL = 1.1f;
     private static final float SPEED = 230f;
     private static final int DAMAGE = 10;
-    private static final float SIZE = 18f;
+    private static final float SIZE = 25f;
 
     private int ringsFired;
 
