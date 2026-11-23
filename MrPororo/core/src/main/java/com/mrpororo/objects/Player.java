@@ -1,3 +1,4 @@
+
 package com.mrpororo.objects;
 
 import com.badlogic.gdx.Gdx;
@@ -5,12 +6,13 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Rectangle;
 import com.mrpororo.systems.SoundManager;
+import com.mrpororo.systems.BulletManager;
 
 import java.util.List;
 
 public class Player extends GameObject {
 
-    private static final float LEGACY_FLOOR_Y = 88f; // dipakai hanya jika tidak ada daftar platform
+    private static final float LEGACY_FLOOR_Y = 88f;
 
     private float health;
     private float maxHealth;
@@ -23,10 +25,16 @@ public class Player extends GameObject {
     private boolean isGrounded;
     private boolean isJumping;
 
+    // Shooting system
+    private float shootCooldown = 0.3f;
+    private float shootTimer = 0f;
+    private float bulletSpeed = 450f;
+    private int bulletDamage = 10;
+
     public Player(float x, float y) {
         super(x, y, 48f, 64f, 250f, Color.BLUE);
 
-        this.maxHealth = 100f;
+        this.maxHealth = 3;
         this.health = maxHealth;
 
         this.velocityY = 0f;
@@ -39,27 +47,57 @@ public class Player extends GameObject {
 
     @Override
     public void update(float delta) {
-        update(delta, null);
+        update(delta, null, null);
     }
 
-    /** Update dengan collision terhadap platform (mendarat dari atas). */
     public void update(float delta, List<Platform> platforms) {
+        update(delta, platforms, null);
+    }
+
+    public void update(float delta, List<Platform> platforms,
+                       BulletManager bulletManager) {
+
         super.update(delta);
         if (!active) return;
 
         // Horizontal movement
-        if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+        if (Gdx.input.isKeyPressed(Input.Keys.A)
+            || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             x -= speed * delta;
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+
+        if (Gdx.input.isKeyPressed(Input.Keys.D)
+            || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             x += speed * delta;
         }
 
         // Jump
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && isGrounded) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)
+            && isGrounded) {
             velocityY = jumpForce;
             isGrounded = false;
             isJumping = true;
+        }
+
+        // Shooting
+        shootTimer -= delta;
+
+        if (bulletManager != null
+            && Gdx.input.isKeyPressed(Input.Keys.J)
+            && shootTimer <= 0f) {
+
+            float bulletX = x + width;
+            float bulletY = y + height / 2f;
+
+            bulletManager.spawnPlayerBullet(
+                bulletX,
+                bulletY,
+                bulletSpeed,
+                0f,
+                bulletDamage
+            );
+
+            shootTimer = shootCooldown;
         }
 
         // Gravity
@@ -69,18 +107,29 @@ public class Player extends GameObject {
 
         // World boundaries
         if (x < 0) x = 0;
-        if (x + width > worldWidth) x = worldWidth - width;
+        if (x + width > worldWidth) {
+            x = worldWidth - width;
+        }
 
         // Ground / platform collision
         isGrounded = false;
+
         if (platforms == null) {
-            if (y <= LEGACY_FLOOR_Y) land(LEGACY_FLOOR_Y);
+            if (y <= LEGACY_FLOOR_Y) {
+                land(LEGACY_FLOOR_Y);
+            }
         } else if (velocityY <= 0f) {
+
             for (Platform p : platforms) {
                 Rectangle r = p.getCoreHitbox();
                 float top = r.y + r.height;
-                boolean overlapX = x + width > r.x && x < r.x + r.width;
-                if (overlapX && prevY >= top - 0.01f && y <= top) {
+
+                boolean overlapX =
+                    x + width > r.x && x < r.x + r.width;
+
+                if (overlapX
+                    && prevY >= top - 0.01f
+                    && y <= top) {
                     land(top);
                     break;
                 }
@@ -110,6 +159,7 @@ public class Player extends GameObject {
         if (damage <= 0 || !active) return;
 
         health -= damage;
+
         if (health <= 0) {
             health = 0;
             destroy();
@@ -120,6 +170,7 @@ public class Player extends GameObject {
 
     public void heal(float amount) {
         if (amount <= 0 || !active) return;
+
         health = Math.min(health + amount, maxHealth);
     }
 

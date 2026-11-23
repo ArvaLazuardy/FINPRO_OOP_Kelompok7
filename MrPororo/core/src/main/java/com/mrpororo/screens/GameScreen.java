@@ -118,7 +118,7 @@ public class GameScreen implements Screen {
 
         // ---- UPDATE ----
         level.update(dt);
-        player.update(dt, level.getPlatforms());
+        player.update(dt, level.getPlatforms(), bulletManager);
         parrySystem.update(delta);
         timeManager.update(delta);
 
@@ -190,11 +190,32 @@ public class GameScreen implements Screen {
             shapeRenderer.rect(h.x, h.y, h.width, h.height);
         }
 
+// Render enemy bullets
         for (Bullet bullet : bulletManager.getActiveEnemyBullets()) {
             if (bullet.isDestroyed()) continue;
-            shapeRenderer.setColor(bullet.getColor());
-            shapeRenderer.rect(bullet.getX(), bullet.getY(), bullet.getWidth(), bullet.getHeight());
+
+            shapeRenderer.setColor(Color.RED);
+            shapeRenderer.rect(
+                bullet.getX(),
+                bullet.getY(),
+                bullet.getWidth(),
+                bullet.getHeight()
+            );
         }
+
+// Render player bullets
+        for (Bullet bullet : bulletManager.getActivePlayerBullets()) {
+            if (bullet.isDestroyed()) continue;
+
+            shapeRenderer.setColor(Color.CYAN);
+            shapeRenderer.rect(
+                bullet.getX(),
+                bullet.getY(),
+                bullet.getWidth(),
+                bullet.getHeight()
+            );
+        }
+
 
         shapeRenderer.end();
 
