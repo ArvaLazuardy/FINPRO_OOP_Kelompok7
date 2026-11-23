@@ -44,6 +44,7 @@ public class BossLevel extends Level {
 
         // ---- debug (hapus nanti) ----
         if (Gdx.input.isKeyJustPressed(Input.Keys.H)) boss.takeDamage(10); // 50% HP -> Phase 2
+        if (Gdx.input.isKeyJustPressed(Input.Keys.J)) boss.takeDamage(50); // langsung Phase 2
         if (Gdx.input.isKeyJustPressed(Input.Keys.R)) load();              // restart level
 
         if (boss.isDead()) complete();

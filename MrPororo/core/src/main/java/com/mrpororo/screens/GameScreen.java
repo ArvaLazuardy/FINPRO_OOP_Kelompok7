@@ -6,7 +6,9 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
@@ -19,6 +21,7 @@ import com.mrpororo.objects.bullets.Bullet;
 import com.mrpororo.systems.*;
 import com.mrpororo.ui.FreezeOverlayRenderer;
 import com.mrpororo.ui.GameHUD;
+import com.mrpororo.objects.enemies.SnowGolem;
 
 public class GameScreen implements Screen {
 
@@ -36,6 +39,10 @@ public class GameScreen implements Screen {
     private final BulletManager bulletManager;
     private final CollisionReferee collisionReferee;
 
+
+
+
+
     private final LevelManager levelManager;
     private Player player;
 
@@ -44,6 +51,12 @@ public class GameScreen implements Screen {
 
     private float dummyShootTimer;
     private float playerShootTimer;
+
+    private String parryStartKey = AssetManager.PARRY_START;
+    private String parrySuccessKey = AssetManager.PARRY_SUCCESS_V2;
+    private float parryAnimationTime = 0f;
+    private float parrySuccessTime = 0f;
+    private boolean parrySuccessPlaying = false;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -96,6 +109,16 @@ public class GameScreen implements Screen {
 
         boolean wasFrozen = timeManager.isFrozen();
         float enemyDelta = timeManager.getEnemyDelta(delta);
+        timeManager.update(dt);
+        parrySystem.update(dt);
+        if (parrySuccessPlaying) {
+            parrySuccessTime += dt;
+            Animation<TextureRegion> successAnim = AssetManager.getInstance().getAnimation(parrySuccessKey);
+            if (successAnim == null || successAnim.isAnimationFinished(parrySuccessTime)) {
+                parrySuccessPlaying = false;
+            }
+        }
+
         if (wasFrozen && !timeManager.isFrozen()) SoundManager.getInstance().stopFreezeAudio();
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
@@ -107,7 +130,10 @@ public class GameScreen implements Screen {
             SoundManager.getInstance().startFreezeAudio();
         }
 
+        // NOTICE ME SENPAI!
+        // DUMMY INI GW NONAKTIFIN DULU YH BUAT TEST ATTACK PATTERN.
         // TEMPORARY BULLET TESTING
+        /*
         if (levelManager.getCurrentType() == LevelManager.LevelType.TEST) {
             dummyShootTimer -= enemyDelta;
             if (dummyShootTimer <= 0f) {
@@ -115,17 +141,26 @@ public class GameScreen implements Screen {
                 dummyShootTimer = 2f;
             }
         }
+        */
 
-        // ---- UPDATE ----
+
+        //  UPDATE!
+        SnowGolem boss = level.getBoss();
+        if (boss != null) boss.bind(bulletManager, player, level.getWorldWidth(), level.getWorldHeight());
+        level.setEnemyDelta(Math.min(enemyDelta, 1f / 30f));
         level.update(dt);
         player.update(dt, level.getPlatforms());
-        parrySystem.update(delta);
-        timeManager.update(delta);
+//        parrySystem.update(delta);
+//        timeManager.update(delta);
 
         bulletManager.update(delta, enemyDelta, level.getWorldWidth(), level.getWorldHeight());
         if (collisionReferee.resolveParries(player.getParryHitbox(), bulletManager.getActiveEnemyBullets(), parrySystem)) {
+            parryAnimationTime = 0f;
+            parrySuccessTime = 0f;
+            parrySuccessPlaying = true;
             SoundManager.getInstance().successfulParry();
         }
+
         collisionReferee.resolvePlayerHits(player, bulletManager.getActiveEnemyBullets());
         bulletManager.cleanup(level.getWorldWidth(), level.getWorldHeight());
 
@@ -184,12 +219,6 @@ public class GameScreen implements Screen {
         player.render(shapeRenderer);
         drawPlayerHealth();
 
-        if (parrySystem.isParryActive()) {
-            shapeRenderer.setColor(Color.PINK);
-            Rectangle h = player.getParryHitbox();
-            shapeRenderer.rect(h.x, h.y, h.width, h.height);
-        }
-
         for (Bullet bullet : bulletManager.getActiveEnemyBullets()) {
             if (bullet.isDestroyed()) continue;
             shapeRenderer.setColor(bullet.getColor());
@@ -197,9 +226,34 @@ public class GameScreen implements Screen {
         }
 
         shapeRenderer.end();
+        renderParrySprite();
 
         hud.render(batch, shapeRenderer, player, parrySystem, timeManager, levelManager.getCurrentType().name());
         freezeOverlay.render(shapeRenderer, timeManager.isFrozen(), timeManager.getRemainingTime());
+    }
+
+    private void renderParrySprite() {
+        boolean startActive = parrySystem.isParryActive();
+        if (!parrySuccessPlaying && !startActive) return;
+
+        Rectangle hitbox = player.getParryHitbox();
+        String key = parrySuccessPlaying ? parrySuccessKey : parryStartKey;
+        float elapsed = parrySuccessPlaying ? parrySuccessTime : parryAnimationTime;
+        Animation<TextureRegion> anim = AssetManager.getInstance().getAnimation(key);
+        if (anim == null) return;
+
+        TextureRegion frame = anim.getKeyFrame(elapsed, false);
+        // Center the visual around the full body. Collision remains unchanged.
+        float visualSize = Math.max(hitbox.width, hitbox.height) * 1.15f;
+        float scale = visualSize / Math.max(frame.getRegionWidth(), frame.getRegionHeight());
+        float drawWidth = frame.getRegionWidth() * scale;
+        float drawHeight = frame.getRegionHeight() * scale;
+        float drawX = hitbox.x + (hitbox.width - drawWidth) / 2f;
+        float drawY = hitbox.y + (hitbox.height - drawHeight) / 2f;
+
+        batch.begin();
+        batch.draw(frame, drawX, drawY, drawWidth, drawHeight);
+        batch.end();
     }
 
     private void handleDebugKeys() {

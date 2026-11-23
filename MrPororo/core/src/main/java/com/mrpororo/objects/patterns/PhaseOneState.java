@@ -10,6 +10,9 @@ public class PhaseOneState extends BossState {
         // TODO: addAttack(new IceShardAttack());
         // TODO: addAttack(new IceBreathSpikeRainAttack());
         // TODO: addAttack(new SlowHomingAttack());
+        addAttack(new IceShardAttack());
+        addAttack(new IceSpikeRainAttack());
+        addAttack(new SlowHomingAttack());
     }
 
     @Override

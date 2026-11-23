@@ -44,6 +44,7 @@ public abstract class BossState {
         idleTimer -= delta;
         if (idleTimer <= 0f && !attacks.isEmpty()) {
             current = pickNextAttack();
+            System.out.println("[BOSS " + getName() + "] ATTACKING USING " + current.getName());
             current.start(boss);
         }
     }
@@ -63,7 +64,7 @@ public abstract class BossState {
     public abstract String getSpriteKey();
     public abstract Color getPlaceholderColor();
 
-    /** Acak, tapi tidak mengulang serangan yang sama dua kali berturut-turut. */
+    /** ATTACK PATTERN RANDOMIZED tapi GA  mgulang ATTACK yang sama dua kali berturut2. */
     private BossAttackPattern pickNextAttack() {
         int index;
         do {
