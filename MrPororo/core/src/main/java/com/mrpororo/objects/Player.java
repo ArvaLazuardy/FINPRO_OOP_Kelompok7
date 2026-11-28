@@ -194,6 +194,31 @@ public class Player extends GameObject {
         else batch.draw(frame, drawX + drawWidth, drawY, -drawWidth, drawHeight);
     }
 
+    public boolean isRolling() {
+        if (!active || isGrounded || shootAnimationRemaining > 0f) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public Rectangle getCoreHitbox() {
+        if (isRolling()) {
+            float rollWidth = width * (30f / 48f);
+            float rollHeight = height * (30f / 64f);
+
+            return new Rectangle(
+                x + (width - rollWidth) / 2f,
+                y + (height - rollHeight) / 2f,
+                rollWidth,
+                rollHeight
+            );
+        }
+
+        return super.getCoreHitbox();
+    }
+
     public Rectangle getParryHitbox() {
         float reach = 15f;
 
