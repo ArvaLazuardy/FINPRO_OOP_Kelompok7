@@ -4,12 +4,17 @@ import com.mrpororo.objects.Player;
 import com.mrpororo.objects.Platform;
 import com.mrpororo.objects.bullets.Bullet;
 import com.mrpororo.objects.bullets.BulletType;
+import com.mrpororo.objects.enemies.SnowGolem;
 
 public final class EntityFactory {
     private EntityFactory() {}
 
     public static Player createPlayer(float x, float y) {
         return new Player(x, y); // no player sprite for now
+    }
+
+    public static SnowGolem createBoss(float x, float y) {
+        return new SnowGolem(x, y);
     }
 
     public static Platform createPlatform(float x, float y, float width, float height, String spriteKey) {

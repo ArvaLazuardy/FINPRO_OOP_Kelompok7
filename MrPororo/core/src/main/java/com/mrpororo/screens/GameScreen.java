@@ -86,10 +86,24 @@ public class GameScreen implements Screen {
 
     private void loadLevel(LevelManager.LevelType type) {
         levelManager.load(type);
-        respawnPlayer();
+        resetLevelState();
+    }
+
+    private void resetLevelState() {
+        stopAbilityEffects();
         parrySystem.reset();
-        timeManager.reset();
         bulletManager.clear();
+        collisionReferee.reset();
+        parryAnimationTime = 0f;
+        parrySuccessTime = 0f;
+        parrySuccessPlaying = false;
+        respawnPlayer();
+    }
+
+    private void stopAbilityEffects() {
+        SoundManager.getInstance().stopParry();
+        if (timeManager.isFrozen()) SoundManager.getInstance().stopFreezeAudio();
+        timeManager.reset();
     }
 
     private void respawnPlayer() {
@@ -102,15 +116,20 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        float dt = Math.min(delta, 1f / 30f);
+        float dt = Math.max(0f, Math.min(delta, 1f / 30f));
+        handleDebugKeys();
         Level level = levelManager.getCurrentLevel();
 
-        handleDebugKeys();
+        if (player.isDestroyed() || level.isCompleted()) {
+            renderWorld();
+            return;
+        }
 
-        boolean wasFrozen = timeManager.isFrozen();
-        float enemyDelta = timeManager.getEnemyDelta(delta);
-        timeManager.update(dt);
+        boolean wasParrying = parrySystem.isParryActive();
         parrySystem.update(dt);
+        collisionReferee.update(dt);
+
+        if (parrySystem.isParryActive()) parryAnimationTime += dt;
         if (parrySuccessPlaying) {
             parrySuccessTime += dt;
             Animation<TextureRegion> successAnim = AssetManager.getInstance().getAnimation(parrySuccessKey);
@@ -119,16 +138,19 @@ public class GameScreen implements Screen {
             }
         }
 
-        if (wasFrozen && !timeManager.isFrozen()) SoundManager.getInstance().stopFreezeAudio();
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
-            if (parrySystem.beginParry()) SoundManager.getInstance().startParry();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F) && parrySystem.beginParry()) {
+            parryAnimationTime = 0f;
+            parrySuccessPlaying = false;
+            SoundManager.getInstance().startParry();
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.Q) && parrySystem.isMeterFull() && timeManager.activateFreeze()) {
             parrySystem.consumeFullMeter();
             SoundManager.getInstance().startFreezeAudio();
         }
+
+        boolean frozenThisFrame = timeManager.isFrozen();
+        float enemyDelta = timeManager.getEnemyDelta(dt);
 
         // NOTICE ME SENPAI!
         // DUMMY INI GW NONAKTIFIN DULU YH BUAT TEST ATTACK PATTERN.
@@ -150,9 +172,6 @@ public class GameScreen implements Screen {
         level.setEnemyDelta(Math.min(enemyDelta, 1f / 30f));
         level.update(dt);
         player.update(dt, level.getPlatforms());
-//        parrySystem.update(delta);
-//        timeManager.update(delta);
-
         bulletManager.update(delta, enemyDelta, level.getWorldWidth(), level.getWorldHeight());
         if (collisionReferee.resolveParries(player.getParryHitbox(), bulletManager.getActiveEnemyBullets(), parrySystem)) {
             parryAnimationTime = 0f;
@@ -162,9 +181,22 @@ public class GameScreen implements Screen {
         }
 
         collisionReferee.resolvePlayerHits(player, bulletManager.getActiveEnemyBullets());
+        if (!player.isDestroyed()) {
+            // Includes SnowGolem and, later, every minion returned by Level.getEnemies().
+            collisionReferee.resolveEnemyHits(bulletManager.getActivePlayerBullets(), level.getEnemies());
+            collisionReferee.resolveEnemyContact(player, level.getEnemies());
+        }
         bulletManager.cleanup(level.getWorldWidth(), level.getWorldHeight());
 
-        if (player.getY() < -200f) respawnPlayer(); // jatuh keluar dunia
+        timeManager.update(dt);
+        if (frozenThisFrame && !timeManager.isFrozen()) SoundManager.getInstance().stopFreezeAudio();
+
+        if (player.isDestroyed()) {
+            stopAbilityEffects();
+            parrySuccessPlaying = false;
+        }
+
+        if (player.getY() < -200f) respawnPlayer(); collisionReferee.reset();// jatuh keluar dunia
 
         if (level instanceof RunGunLevel) {
             ((RunGunLevel) level).checkFinish(player.getX());
@@ -225,6 +257,10 @@ public class GameScreen implements Screen {
             shapeRenderer.rect(bullet.getX(), bullet.getY(), bullet.getWidth(), bullet.getHeight());
         }
 
+        for (Bullet bullet : bulletManager.getActivePlayerBullets()) {
+            if (!bullet.isDestroyed()) bullet.render(shapeRenderer);
+        }
+
         shapeRenderer.end();
         renderParrySprite();
 
@@ -260,7 +296,7 @@ public class GameScreen implements Screen {
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) loadLevel(LevelManager.LevelType.TEST);
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) loadLevel(LevelManager.LevelType.RUN_GUN);
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) loadLevel(LevelManager.LevelType.BOSS);
-        if (Gdx.input.isKeyJustPressed(Input.Keys.R)) respawnPlayer();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.R)) loadLevel(levelManager.getCurrentType());
     }
 
     @Override
@@ -275,6 +311,7 @@ public class GameScreen implements Screen {
 
     @Override
     public void dispose() {
+        stopAbilityEffects();
         levelManager.dispose();
         hud.dispose();
         freezeOverlay.dispose();

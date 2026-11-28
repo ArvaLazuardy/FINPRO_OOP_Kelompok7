@@ -30,7 +30,7 @@ public class BossLevel extends Level {
         platforms.add(EntityFactory.createPlatform(535f, 185f, 160f, 24f, AssetManager.SNOW_LEDGE));
 
         // Boss placeholder: diam di kanan, berdiri di atas tanah
-        boss = new SnowGolem(720f, GROUND_TOP);
+        boss = EntityFactory.createBoss(720f, GROUND_TOP);
     }
 
     @Override
@@ -43,8 +43,8 @@ public class BossLevel extends Level {
         boss.update(delta);
 
         // ---- debug (hapus nanti) ----
-        if (Gdx.input.isKeyJustPressed(Input.Keys.H)) boss.takeDamage(10); // 50% HP -> Phase 2
-        if (Gdx.input.isKeyJustPressed(Input.Keys.J)) boss.takeDamage(50); // langsung Phase 2
+        if (Gdx.input.isKeyJustPressed(Input.Keys.H)) boss.takeDamage(100); // 50% HP -> Phase 2
+        if (Gdx.input.isKeyJustPressed(Input.Keys.J)) boss.takeDamage(500); // langsung Phase 2
         if (Gdx.input.isKeyJustPressed(Input.Keys.R)) load();              // restart level
 
         if (boss.isDead()) complete();

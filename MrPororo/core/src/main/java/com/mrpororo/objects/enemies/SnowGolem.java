@@ -22,7 +22,7 @@ public class SnowGolem extends Enemy {
     private float worldHeight = 540f;
 
     public SnowGolem(float x, float y) {
-        super(x, y, 200f, 300f, 100, 20, 0f, Color.CYAN);
+        super(x, y, 200f, 300f, 1200, 20, 0f, Color.CYAN);
         changeState(new PhaseOneState());
     }
 

@@ -37,7 +37,10 @@ public class BulletManager {
     // differentiate between enemy and player deltas
     public void update(float playerDelta, float enemyDelta, float worldWidth, float worldHeight) {
         for (Bullet b : activePlayerBullets) b.update(playerDelta);
-        for (Bullet b : activeEnemyBullets) b.update(enemyDelta);
+        // Some movement patterns perform actions even with delta == 0.
+        if (enemyDelta > 0f) {
+            for (Bullet b : activeEnemyBullets) b.update(enemyDelta);
+        }
         cleanup(worldWidth, worldHeight);
     }
 

@@ -30,7 +30,7 @@ public class TestLevel extends Level {
         platforms.add(EntityFactory.createPlatform(260f, 185f, 170f, 24f, AssetManager.SNOW_LEDGE));
         platforms.add(EntityFactory.createPlatform(550f, 265f, 165f, 24f, AssetManager.SNOW_LEDGE));
 
-        boss = new SnowGolem(720f, GROUND_TOP); // diam di kanan, berdiri di tanah
+        boss = EntityFactory.createBoss(720f, GROUND_TOP); // diam di kanan, berdiri di tanah
     }
 
     @Override
@@ -39,10 +39,10 @@ public class TestLevel extends Level {
     @Override
     protected void updateLevel(float delta) {
         if (boss == null) return;
-        boss.update(enemyDelta);
+        if (enemyDelta > 0f) boss.update(enemyDelta);
 
         // debug: H = boss kena 10 damage (Phase 2 saat HP <= 50%)
-        if (Gdx.input.isKeyJustPressed(Input.Keys.H)) boss.takeDamage(10);
+        if (Gdx.input.isKeyJustPressed(Input.Keys.H)) boss.takeDamage(100);
     }
 
     @Override

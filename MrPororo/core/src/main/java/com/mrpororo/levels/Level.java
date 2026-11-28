@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.mrpororo.objects.Platform;
 import com.mrpororo.objects.enemies.SnowGolem;
+import com.mrpororo.objects.enemies.Enemy;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,4 +56,10 @@ public abstract class Level {
 
     public void setEnemyDelta(float enemyDelta) { this.enemyDelta = enemyDelta; }
     public SnowGolem getBoss() { return null; } // di-override TestLevel & BossLevel
+
+    /** Boss/Test already expose their boss. RunGunLevel can override this for minions later. */
+    public List<? extends Enemy> getEnemies() {
+        SnowGolem boss = getBoss();
+        return boss == null ? Collections.emptyList() : Collections.singletonList(boss);
+    }
 }

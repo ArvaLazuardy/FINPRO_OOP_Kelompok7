@@ -14,7 +14,7 @@ public class SoundManager {
     private final Random random = new Random();
     private Music bgm;
     private Music freezeLoop;
-    private long parryaudioId = 0;
+    private long parryaudioId = -1L;
 
     public static SoundManager getInstance() {
         if (instance == null) {
@@ -82,22 +82,20 @@ public class SoundManager {
     }
 
     public void startParry() {
+        stopParry();
         Sound sound = sounds.get("parry_start");
+        if (sound != null) parryaudioId = sound.play(0.4f);
+    }
 
-        if (sound != null) {
-            sound.play(0.4f);
-            parryaudioId = -1;
-        }
+    public void stopParry() {
+        Sound sound = sounds.get("parry_start");
+        if (sound != null && parryaudioId >= 0L) sound.stop(parryaudioId);
+        parryaudioId = -1L;
     }
 
     public void successfulParry() {
-        Sound sound = sounds.get("parry_success");
-
-        if (sound != null && parryaudioId != 0) {
-            sound.stop(parryaudioId);
-            sound.play(0.4f);
-            parryaudioId = 0;
-        }
+        stopParry();
+        playSfx("parry_success");
     }
 
     public void stopFreezeAudio() {
