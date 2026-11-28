@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 
 public class LeaderboardClient {
     // Replace with the deployed HTTPS address for actual online database
-    public static final String API_URL = "http://localhost:8080/api/leaderboard";
+    public static final String API_URL = "https://finprooopkelompok7-production.up.railway.app/api/leaderboard";
 
     public static class Entry {
         public final String playerName;
@@ -61,7 +61,7 @@ public class LeaderboardClient {
     private void send(String method, String body, Consumer<String> onSuccess, Consumer<String> onError) {
         Net.HttpRequest request = new Net.HttpRequest(method);
         request.setUrl(API_URL);
-        request.setTimeOut(15000);
+        request.setTimeOut(90000);
         request.setHeader("Accept", "application/json");
         if (body != null) {
             request.setHeader("Content-Type", "application/json");
