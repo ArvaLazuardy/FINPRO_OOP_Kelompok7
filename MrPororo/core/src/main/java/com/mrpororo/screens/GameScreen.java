@@ -21,6 +21,7 @@ import com.mrpororo.objects.bullets.Bullet;
 import com.mrpororo.systems.*;
 import com.mrpororo.ui.FreezeOverlayRenderer;
 import com.mrpororo.ui.GameHUD;
+import com.mrpororo.ui.LeaderboardPanel;
 import com.mrpororo.objects.enemies.SnowGolem;
 
 public class GameScreen implements Screen {
@@ -45,6 +46,11 @@ public class GameScreen implements Screen {
 
     private final LevelManager levelManager;
     private Player player;
+
+    private final RunTimer runTimer = new RunTimer();
+    private final LeaderboardPanel leaderboardPanel = new LeaderboardPanel();
+    private boolean rankedRun;
+    private boolean paused;
 
     private final GameHUD hud;
     private final FreezeOverlayRenderer freezeOverlay;
@@ -81,7 +87,21 @@ public class GameScreen implements Screen {
 
     @Override
     public void show() {
-        loadLevel(LevelManager.LevelType.TEST); // ganti ke RUN_GUN / BOSS sesuai kebutuhan
+        // Keep practice as the development default; use startRankedRun() here for release.
+        loadPracticeLevel(LevelManager.LevelType.TEST);
+    }
+
+    private void startRankedRun() {
+        leaderboardPanel.close();
+        loadLevel(LevelManager.LevelType.RUN_GUN);
+        runTimer.start();
+        rankedRun = true;
+    }
+
+    private void loadPracticeLevel(LevelManager.LevelType type) {
+        runTimer.stop();
+        rankedRun = false;
+        loadLevel(type);
     }
 
     private void loadLevel(LevelManager.LevelType type) {
@@ -116,8 +136,23 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        if (paused) return;
+        if (leaderboardPanel.isOpen()) {
+            if (leaderboardPanel.canLeave() && Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+                startRankedRun();
+                renderWorld();
+                return;
+            } else {
+                leaderboardPanel.render();
+                return;
+            }
+        }
         float dt = Math.max(0f, Math.min(delta, 1f / 30f));
         handleDebugKeys();
+        if (leaderboardPanel.isOpen()) {
+            leaderboardPanel.render();
+            return;
+        }
         Level level = levelManager.getCurrentLevel();
 
         if (player.isDestroyed() || level.isCompleted()) {
@@ -146,10 +181,13 @@ public class GameScreen implements Screen {
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.Q) && parrySystem.isMeterFull() && timeManager.activateFreeze()) {
             parrySystem.consumeFullMeter();
+            runTimer.registerFreeze();
             SoundManager.getInstance().startFreezeAudio();
         }
 
         boolean frozenThisFrame = timeManager.isFrozen();
+        // Count real frame time, excluding at most the remaining freeze duration.
+        runTimer.update(delta, timeManager.getRemainingTime());
         float enemyDelta = timeManager.getEnemyDelta(dt);
 
         // NOTICE ME SENPAI!
@@ -172,8 +210,9 @@ public class GameScreen implements Screen {
         level.setEnemyDelta(Math.min(enemyDelta, 1f / 30f));
         level.update(dt);
         player.update(dt, level.getPlatforms());
-        bulletManager.update(delta, enemyDelta, level.getWorldWidth(), level.getWorldHeight());
+        bulletManager.update(dt, enemyDelta, level.getWorldWidth(), level.getWorldHeight());
         if (collisionReferee.resolveParries(player.getParryHitbox(), bulletManager.getActiveEnemyBullets(), parrySystem)) {
+            runTimer.registerParry();
             parryAnimationTime = 0f;
             parrySuccessTime = 0f;
             parrySuccessPlaying = true;
@@ -188,12 +227,15 @@ public class GameScreen implements Screen {
         }
         bulletManager.cleanup(level.getWorldWidth(), level.getWorldHeight());
 
-        timeManager.update(dt);
+        timeManager.update(Math.max(0f, delta));
         if (frozenThisFrame && !timeManager.isFrozen()) SoundManager.getInstance().stopFreezeAudio();
 
         if (player.isDestroyed()) {
+            runTimer.stop();
             stopAbilityEffects();
             parrySuccessPlaying = false;
+            renderWorld();
+            return;
         }
 
         if (player.getY() < -200f) respawnPlayer(); collisionReferee.reset();// jatuh keluar dunia
@@ -201,10 +243,21 @@ public class GameScreen implements Screen {
         if (level instanceof RunGunLevel) {
             ((RunGunLevel) level).checkFinish(player.getX());
         }
+        // Detect a lethal hit this frame rather than waiting for another update.
+        if (levelManager.getCurrentType() == LevelManager.LevelType.BOSS
+            && boss != null && boss.isDead()) level.complete();
+
         if (level.isCompleted()) {
+            if (levelManager.getCurrentType() == LevelManager.LevelType.BOSS) {
+                runTimer.stop();
+                stopAbilityEffects();
+                leaderboardPanel.open(rankedRun ? runTimer : null);
+                leaderboardPanel.render();
+                return;
+            }
             LevelManager.LevelType before = levelManager.getCurrentType();
             levelManager.nextLevel();
-            if (levelManager.getCurrentType() != before) respawnPlayer(); // hanya jika level benar-benar berganti
+            if (levelManager.getCurrentType() != before) resetLevelState();
             level = levelManager.getCurrentLevel();
         }
 
@@ -266,6 +319,7 @@ public class GameScreen implements Screen {
 
         hud.render(batch, shapeRenderer, player, parrySystem, timeManager, levelManager.getCurrentType().name());
         freezeOverlay.render(shapeRenderer, timeManager.isFrozen(), timeManager.getRemainingTime());
+        if (rankedRun) leaderboardPanel.renderTimer(runTimer, timeManager.isFrozen());
     }
 
     private void renderParrySprite() {
@@ -293,26 +347,37 @@ public class GameScreen implements Screen {
     }
 
     private void handleDebugKeys() {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) loadLevel(LevelManager.LevelType.TEST);
-        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) loadLevel(LevelManager.LevelType.RUN_GUN);
-        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) loadLevel(LevelManager.LevelType.BOSS);
-        if (Gdx.input.isKeyJustPressed(Input.Keys.R)) loadLevel(levelManager.getCurrentType());
+        if (Gdx.input.isKeyJustPressed(Input.Keys.N)) { startRankedRun(); return; }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) { loadPracticeLevel(LevelManager.LevelType.TEST); return; }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) { loadPracticeLevel(LevelManager.LevelType.RUN_GUN); return; }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) { loadPracticeLevel(LevelManager.LevelType.BOSS); return; }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+            if (rankedRun) startRankedRun();
+            else loadPracticeLevel(levelManager.getCurrentType());
+            return;
+        }
+        if (!rankedRun && Gdx.input.isKeyJustPressed(Input.Keys.L)) {
+            stopAbilityEffects();
+            leaderboardPanel.open(null);
+        }
     }
 
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
+        leaderboardPanel.resize(width, height);
         updateCamera();
     }
 
-    @Override public void pause()  { levelManager.getCurrentLevel().pause(); }
-    @Override public void resume() { levelManager.getCurrentLevel().resume(); }
+    @Override public void pause()  { paused = true; levelManager.getCurrentLevel().pause(); }
+    @Override public void resume() { paused = false; levelManager.getCurrentLevel().resume(); }
     @Override public void hide()   { }
 
     @Override
     public void dispose() {
         stopAbilityEffects();
         levelManager.dispose();
+        leaderboardPanel.dispose();
         hud.dispose();
         freezeOverlay.dispose();
         batch.dispose();

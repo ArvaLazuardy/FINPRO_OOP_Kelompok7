@@ -40,7 +40,7 @@ public class BossLevel extends Level {
     protected void updateLevel(float delta) {
         if (boss == null) return;
 
-        boss.update(delta);
+        if (enemyDelta > 0f) boss.update(enemyDelta);
 
         // ---- debug (hapus nanti) ----
         if (Gdx.input.isKeyJustPressed(Input.Keys.H)) boss.takeDamage(100); // 50% HP -> Phase 2
