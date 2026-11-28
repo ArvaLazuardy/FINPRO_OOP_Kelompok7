@@ -121,6 +121,7 @@ public class GameScreen implements Screen {
         Level level = levelManager.getCurrentLevel();
 
         if (player.isDestroyed() || level.isCompleted()) {
+            if (player.isDestroyed()) player.updateDeathAnimation(dt);
             renderWorld();
             return;
         }
@@ -171,8 +172,8 @@ public class GameScreen implements Screen {
         if (boss != null) boss.bind(bulletManager, player, level.getWorldWidth(), level.getWorldHeight());
         level.setEnemyDelta(Math.min(enemyDelta, 1f / 30f));
         level.update(dt);
-        player.update(dt, level.getPlatforms());
-        bulletManager.update(delta, enemyDelta, level.getWorldWidth(), level.getWorldHeight());
+        player.update(dt, level.getPlatforms(), bulletManager);
+        bulletManager.update(dt, enemyDelta, level.getWorldWidth(), level.getWorldHeight());
         if (collisionReferee.resolveParries(player.getParryHitbox(), bulletManager.getActiveEnemyBullets(), parrySystem)) {
             parryAnimationTime = 0f;
             parrySuccessTime = 0f;
@@ -196,7 +197,10 @@ public class GameScreen implements Screen {
             parrySuccessPlaying = false;
         }
 
-        if (player.getY() < -200f) respawnPlayer(); collisionReferee.reset();// jatuh keluar dunia
+        if (!player.isDestroyed() && player.getY() < -200f) {
+            respawnPlayer();
+            collisionReferee.reset();
+        } // jatuh keluar dunia
 
         if (level instanceof RunGunLevel) {
             ((RunGunLevel) level).checkFinish(player.getX());
@@ -204,7 +208,11 @@ public class GameScreen implements Screen {
         if (level.isCompleted()) {
             LevelManager.LevelType before = levelManager.getCurrentType();
             levelManager.nextLevel();
-            if (levelManager.getCurrentType() != before) respawnPlayer(); // hanya jika level benar-benar berganti
+            if (levelManager.getCurrentType() != before) {
+                bulletManager.clear();
+                collisionReferee.reset();
+                respawnPlayer();
+            } // hanya jika level benar-benar berganti
             level = levelManager.getCurrentLevel();
         }
 
@@ -248,7 +256,7 @@ public class GameScreen implements Screen {
         level.render(batch, shapeRenderer); // level mengurus begin/end sendiri
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        player.render(shapeRenderer);
+        if (!player.hasVisual()) player.render(shapeRenderer);
         drawPlayerHealth();
 
         for (Bullet bullet : bulletManager.getActiveEnemyBullets()) {
@@ -257,11 +265,23 @@ public class GameScreen implements Screen {
             shapeRenderer.rect(bullet.getX(), bullet.getY(), bullet.getWidth(), bullet.getHeight());
         }
 
-        for (Bullet bullet : bulletManager.getActivePlayerBullets()) {
-            if (!bullet.isDestroyed()) bullet.render(shapeRenderer);
+        boolean hasBulletSprite = AssetManager.getInstance().getRegion(AssetManager.PLAYER_BULLET) != null;
+        if (!hasBulletSprite) {
+            for (Bullet bullet : bulletManager.getActivePlayerBullets()) {
+                if (!bullet.isDestroyed()) bullet.render(shapeRenderer);
+            }
         }
 
         shapeRenderer.end();
+
+        batch.begin();
+        player.render(batch);
+        if (hasBulletSprite) {
+            for (Bullet bullet : bulletManager.getActivePlayerBullets()) {
+                if (!bullet.isDestroyed()) bullet.render(batch);
+            }
+        }
+        batch.end();
         renderParrySprite();
 
         hud.render(batch, shapeRenderer, player, parrySystem, timeManager, levelManager.getCurrentType().name());

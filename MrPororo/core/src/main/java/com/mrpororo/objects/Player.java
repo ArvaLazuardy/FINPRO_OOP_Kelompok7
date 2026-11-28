@@ -4,6 +4,11 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.mrpororo.systems.AssetManager;
+import com.mrpororo.systems.BulletManager;
 import com.mrpororo.systems.SoundManager;
 
 import java.util.List;
@@ -23,6 +28,18 @@ public class Player extends GameObject {
     private boolean isGrounded;
     private boolean isJumping;
 
+    private static final float SHOOT_COOLDOWN = 0.3f;
+    private static final float BULLET_SPEED = 450f;
+    private static final int BULLET_DAMAGE = 10;
+    private static final float SHOOT_ANIMATION_DURATION = 0.16f;
+    private float shootTimer;
+    private float shootAnimationRemaining;
+    private float jumpAnimationTime;
+    private float movementAnimationTime;
+    private float dyingTime;
+    private boolean facingRight = true;
+    private boolean moving;
+
     public Player(float x, float y) {
         super(x, y, 48f, 64f, 250f, Color.BLUE);
 
@@ -39,27 +56,37 @@ public class Player extends GameObject {
 
     @Override
     public void update(float delta) {
-        update(delta, null);
+        update(delta, null, null);
     }
 
     /** Update dengan collision terhadap platform (mendarat dari atas). */
     public void update(float delta, List<Platform> platforms) {
+        update(delta, platforms, null);
+    }
+
+    public void update(float delta, List<Platform> platforms, BulletManager bulletManager) {
         super.update(delta);
         if (!active) return;
 
-        // Horizontal movement
-        if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            x -= speed * delta;
+        shootTimer = Math.max(0f, shootTimer - delta);
+        shootAnimationRemaining = Math.max(0f, shootAnimationRemaining - delta);
+
+        boolean left = Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT);
+        boolean right = Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT);
+        boolean wasMoving = moving;
+        moving = left != right;
+        if (moving) {
+            facingRight = right;
+            x += (facingRight ? speed : -speed) * delta;
         }
-        if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            x += speed * delta;
-        }
+        movementAnimationTime = wasMoving == moving ? movementAnimationTime + delta : 0f;
 
         // Jump
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && isGrounded) {
             velocityY = jumpForce;
             isGrounded = false;
             isJumping = true;
+            jumpAnimationTime = 0f;
         }
 
         // Gravity
@@ -72,6 +99,7 @@ public class Player extends GameObject {
         if (x + width > worldWidth) x = worldWidth - width;
 
         // Ground / platform collision
+        boolean wasGrounded = isGrounded;
         isGrounded = false;
         if (platforms == null) {
             if (y <= LEGACY_FLOOR_Y) land(LEGACY_FLOOR_Y);
@@ -86,6 +114,69 @@ public class Player extends GameObject {
                 }
             }
         }
+        if (!isGrounded) {
+            if (wasGrounded) jumpAnimationTime = 0f;
+            else jumpAnimationTime += delta;
+        } else {
+            jumpAnimationTime = 0f;
+        }
+
+        // Use the existing pooled BulletManager; holding J repeats at the cooldown.
+        if (bulletManager != null && Gdx.input.isKeyPressed(Input.Keys.J) && shootTimer <= 0f) {
+            float bulletX = facingRight ? x + width : x - 16f;
+            float bulletY = y + height * 0.55f - 8f;
+            bulletManager.spawnPlayerBullet(bulletX, bulletY,
+                facingRight ? BULLET_SPEED : -BULLET_SPEED, 0f, BULLET_DAMAGE);
+            shootTimer = SHOOT_COOLDOWN;
+            shootAnimationRemaining = SHOOT_ANIMATION_DURATION;
+        }
+    }
+
+    private TextureRegion getCurrentFrame() {
+        AssetManager assets = AssetManager.getInstance();
+        Animation<TextureRegion> anim;
+        if (!active) {
+            anim = assets.getAnimation(AssetManager.PLAYER_DYING);
+            return anim == null ? null : anim.getKeyFrame(dyingTime, false);
+        }
+        if (shootAnimationRemaining > 0f) {
+            anim = assets.getAnimation(AssetManager.PLAYER_SHOOT);
+            if (anim != null) return anim.getKeyFrame(SHOOT_ANIMATION_DURATION - shootAnimationRemaining, false);
+        }
+        if (!isGrounded) {
+            anim = assets.getAnimation(AssetManager.PLAYER_JUMP);
+            if (anim != null) return anim.getKeyFrame(jumpAnimationTime, false);
+        }
+        anim = assets.getAnimation(moving ? AssetManager.PLAYER_WALK : AssetManager.PLAYER_IDLE);
+        if (anim == null) anim = assets.getAnimation(AssetManager.PLAYER_IDLE);
+        return anim == null ? null : anim.getKeyFrame(movementAnimationTime, true);
+    }
+
+    public void updateDeathAnimation(float delta) {
+        if (!active) dyingTime += Math.max(0f, delta);
+    }
+
+    public boolean hasVisual() {
+        return getCurrentFrame() != null;
+    }
+
+    public boolean isFacingRight() { return facingRight; }
+
+    @Override
+    public void render(SpriteBatch batch) {
+        TextureRegion frame = getCurrentFrame();
+        if (batch == null || frame == null) return;
+
+        // Original art is 1254x1254 with transparent padding. Ground the
+        // visible feet (~1034px from the top) at the existing 48x64 hitbox.
+        float drawHeight = height * (1254f / 819f);
+        float drawWidth = drawHeight * frame.getRegionWidth() / frame.getRegionHeight();
+        float drawX = x + (width - drawWidth) / 2f;
+        float drawY = y - drawHeight * (220f / 1254f);
+
+        // The TextureRegion overload handles vertical UVs. Mirror only X.
+        if (facingRight) batch.draw(frame, drawX, drawY, drawWidth, drawHeight);
+        else batch.draw(frame, drawX + drawWidth, drawY, -drawWidth, drawHeight);
     }
 
     public Rectangle getParryHitbox() {

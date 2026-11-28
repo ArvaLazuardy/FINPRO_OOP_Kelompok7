@@ -29,6 +29,13 @@ public class AssetManager {
     public static final String PARRY_SUCCESS_SHEET = "ParrySuccessful_SpriteSheet.png";
     public static final String PARRY_SUCCESS_V2_SHEET = "ParrySuccessfulVer2_SpriteSheet.png";
 
+    public static final String PLAYER_IDLE = "player_idle";
+    public static final String PLAYER_WALK = "player_walk";
+    public static final String PLAYER_JUMP = "player_jump";
+    public static final String PLAYER_SHOOT = "player_shoot";
+    public static final String PLAYER_DYING = "player_dying";
+    public static final String PLAYER_BULLET = "player_bullet";
+
     private Map<String, TextureRegion> textureRegionMap;
     private Map<String, Animation<TextureRegion>> animationMap;
     private Map<String, Texture> textureMap;
@@ -211,7 +218,35 @@ public class AssetManager {
         return animationMap.get(key);
     }
 
+    /** Registers an animation made of separate numbered PNGs, not a grid. */
+    public boolean registerAnimationFromFiles(String key, String folder, String prefix,
+                                              int frameCount, float frameDuration, Animation.PlayMode playMode) {
+        TextureRegion[] frames = new TextureRegion[frameCount];
+        for (int i = 0; i < frameCount; i++) {
+            Texture texture = loadTexture(folder + prefix + (i + 1) + ".png");
+            if (texture == null) return false;
+            frames[i] = new TextureRegion(texture);
+        }
+        Animation<TextureRegion> animation = new Animation<>(frameDuration, frames);
+        animation.setPlayMode(playMode);
+        animationMap.put(key, animation);
+        textureRegionMap.put(key, frames[0]);
+        return true;
+    }
+
+    private void registerPlayerAssets() {
+        registerAnimationFromFiles(PLAYER_IDLE, "player/idle/", "idle", 2, 0.15f, Animation.PlayMode.LOOP);
+        registerAnimationFromFiles(PLAYER_WALK, "player/walk/", "walk", 4, 0.10f, Animation.PlayMode.LOOP);
+        registerAnimationFromFiles(PLAYER_JUMP, "player/jump/", "jump", 9, 0.10f, Animation.PlayMode.NORMAL);
+        registerAnimationFromFiles(PLAYER_SHOOT, "player/shoot/", "shoot", 2, 0.08f, Animation.PlayMode.NORMAL);
+        // belom ada buat mati
+        registerAnimationFromFiles(PLAYER_DYING, "player/dying/", "dying", 7, 0.12f, Animation.PlayMode.NORMAL);
+        Texture bullet = loadTexture("player/bullet.png");
+        if (bullet != null) registerRegion(PLAYER_BULLET, new TextureRegion(bullet));
+    }
+
     public void init() {
+        registerPlayerAssets();
         registerPixelRegion(SNOW_GROUND, WINTER_TILESET, 78, 1000, 450, 373);
         registerPixelRegion(SNOW_PLATFORM, WINTER_TILESET, 155, 737, 205, 216);
         registerPixelRegion(SNOW_LEDGE, WINTER_TILESET, 252, 639, 216, 81);

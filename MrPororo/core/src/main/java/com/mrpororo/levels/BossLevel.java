@@ -1,7 +1,5 @@
 package com.mrpororo.levels;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -40,12 +38,7 @@ public class BossLevel extends Level {
     protected void updateLevel(float delta) {
         if (boss == null) return;
 
-        boss.update(delta);
-
-        // ---- debug (hapus nanti) ----
-        if (Gdx.input.isKeyJustPressed(Input.Keys.H)) boss.takeDamage(100); // 50% HP -> Phase 2
-        if (Gdx.input.isKeyJustPressed(Input.Keys.J)) boss.takeDamage(500); // langsung Phase 2
-        if (Gdx.input.isKeyJustPressed(Input.Keys.R)) load();              // restart level
+        if (enemyDelta > 0f) boss.update(enemyDelta);
 
         if (boss.isDead()) complete();
     }

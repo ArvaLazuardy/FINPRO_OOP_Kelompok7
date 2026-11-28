@@ -2,6 +2,8 @@ package com.mrpororo.objects.bullets;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.mrpororo.systems.AssetManager;
 
 import com.mrpororo.objects.GameObject;
 import com.mrpororo.objects.Collidable;
@@ -56,7 +58,18 @@ public class Bullet extends GameObject {
 
     @Override
     public void render(SpriteBatch batch) {
-        super.render(batch);
+        if (!active || batch == null) return;
+        if (!playerBullet) {
+            super.render(batch);
+            return;
+        }
+        TextureRegion frame = AssetManager.getInstance().getRegion(AssetManager.PLAYER_BULLET);
+        if (frame == null) return;
+        float drawHeight = height;
+        float drawWidth = drawHeight * frame.getRegionWidth() / frame.getRegionHeight();
+        float drawX = x + (width - drawWidth) / 2f;
+        if (vx >= 0f) batch.draw(frame, drawX, y, drawWidth, drawHeight);
+        else batch.draw(frame, drawX + drawWidth, y, -drawWidth, drawHeight);
     }
 
     @Override
@@ -75,6 +88,12 @@ public class Bullet extends GameObject {
         this.bulletType = bulletType;
         this.playerBullet = playerBullet;
 
+        // A pooled enemy spike may have changed these values previously.
+        this.width = 16f;
+        this.height = 16f;
+        this.color = Color.WHITE;
+        this.sprite = null;
+        this.animation = null;
         this.active = true;
         this.stateTime = 0f;
         this.movementPattern = null;

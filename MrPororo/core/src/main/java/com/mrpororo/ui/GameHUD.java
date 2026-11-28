@@ -34,9 +34,9 @@ public class GameHUD {
         batch.begin();
 
         font.draw(batch, "Score: " + score, 20, 460);
-        font.draw(batch, "Health: " + health, 20, 430);
+        font.draw(batch, "Health: " + (int) player.getHealth(), 20, 430);
         font.draw(batch, "Parry  " + (int) parrySystem.getEnergy() + "%", 20f, 390f);
-        font.draw(batch, "A/D move | SPACE jump | F parry | Q freeze | 1/2/3 Levels | R respawn", 20f, 26f);
+        font.draw(batch, "A/D move | SPACE jump | J shoot | F parry | Q freeze | 1/2/3 Levels | R respawn", 20f, 26f);
 
         batch.end();
     }
