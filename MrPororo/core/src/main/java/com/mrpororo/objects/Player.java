@@ -32,6 +32,8 @@ public class Player extends GameObject {
     private static final float BULLET_SPEED = 450f;
     private static final int BULLET_DAMAGE = 10;
     private static final float SHOOT_ANIMATION_DURATION = 0.16f;
+    private static final float WALK_SOUND_INTERVAL = 0.20f;
+    private float walkSoundTimer;
     private float shootTimer;
     private float shootAnimationRemaining;
     private float jumpAnimationTime;
@@ -87,6 +89,7 @@ public class Player extends GameObject {
             isGrounded = false;
             isJumping = true;
             jumpAnimationTime = 0f;
+            SoundManager.getInstance().playPlayerJump();
         }
 
         // Gravity
@@ -121,12 +124,24 @@ public class Player extends GameObject {
             jumpAnimationTime = 0f;
         }
 
+        // Footsteps only appear when actually moving on the ground, not while midair.
+        if (isGrounded && moving) {
+            walkSoundTimer -= delta;
+            if (walkSoundTimer <= 0f) {
+                SoundManager.getInstance().playPlayerWalk();
+                walkSoundTimer = WALK_SOUND_INTERVAL;
+            }
+        } else {
+            walkSoundTimer = 0f;
+        }
+
         // Use the existing pooled BulletManager; holding J repeats at the cooldown.
         if (bulletManager != null && Gdx.input.isKeyPressed(Input.Keys.J) && shootTimer <= 0f) {
             float bulletX = facingRight ? x + width : x - 16f;
             float bulletY = y + height * 0.55f - 8f;
             bulletManager.spawnPlayerBullet(bulletX, bulletY,
                 facingRight ? BULLET_SPEED : -BULLET_SPEED, 0f, BULLET_DAMAGE);
+            SoundManager.getInstance().playPlayerShoot();
             shootTimer = SHOOT_COOLDOWN;
             shootAnimationRemaining = SHOOT_ANIMATION_DURATION;
         }

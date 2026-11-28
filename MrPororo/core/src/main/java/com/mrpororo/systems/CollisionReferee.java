@@ -62,8 +62,12 @@ public class CollisionReferee {
 
                 int previousHealth = enemy.getHealth();
                 enemy.takeDamage(bullet.getDamage());
-                totalDamage += Math.max(0, previousHealth - enemy.getHealth());
+                int damageDealt = Math.max(0, previousHealth - enemy.getHealth());
+                totalDamage += damageDealt;
                 bullet.destroy();
+                if (damageDealt > 0) {
+                    SoundManager.getInstance().playBulletImpact();
+                }
                 break;
             }
         }

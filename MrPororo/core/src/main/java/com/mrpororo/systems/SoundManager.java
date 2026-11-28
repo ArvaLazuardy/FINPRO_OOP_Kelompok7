@@ -30,14 +30,28 @@ public class SoundManager {
         }
     }
 
+    // New audio may not be present in every teammate's local checkout yet.
+    private void loadOptionalSound(String key, String path) {
+        if (Gdx.files.internal(path).exists()) {
+            loadSound(key, path);
+        }
+    }
+
     public void loadBgm(String path) {
         bgm = Gdx.audio.newMusic(Gdx.files.internal(path));
     }
 
     public void init() {
-        // loadSound("shoot1", "audio/Paige_fire_01.mp3");
-        // loadBgm("audio/BGM_Flowering Night.mp3");
-        // placeholder
+        for (int i = 1; i <= 8; i++) {
+            loadOptionalSound("player_walk" + i, "audio/player_walk" + i + ".mp3");
+        }
+        for (int i = 1; i <= 6; i++) {
+            loadOptionalSound("player_shoot" + i, "audio/player_shoot" + i + ".mp3");
+        }
+        for (int i = 1; i <= 2; i++) {
+            loadOptionalSound("bullet_impact" + i, "audio/bullet_impact" + i + ".mp3");
+        }
+        loadOptionalSound("player_jump", "audio/player_jump.mp3");
 
         loadSound("parry_start", "audio/melee_parry_start.mp3");
         loadSound("parry_success", "audio/melee_parry_success.mp3");
@@ -64,15 +78,64 @@ public class SoundManager {
         }
     }
 
+    public void playSfx(String key, float volume) {
+        Sound sound = sounds.get(key);
+
+        if (sound != null) {
+            sound.play(volume);
+        }
+    }
+
+    // custom volume
     public void startFreezeAudio() {
         playSfx("freeze_start");
         if (freezeLoop != null) freezeLoop.play();
     }
 
-    // random hit noise
+    // random play
+    private void playRandomSfx(String prefix, int count) {
+        int available = 0;
+        String selected = null;
+        for (int i = 1; i <= count; i++) {
+            String key = prefix + i;
+            if (sounds.containsKey(key) && random.nextInt(++available) == 0) {
+                selected = key;
+            }
+        }
+        if (selected != null) playSfx(selected);
+    }
+
+    // custom volume
+    private void playRandomSfx(String prefix, int count, float volume) {
+        int available = 0;
+        String selected = null;
+        for (int i = 1; i <= count; i++) {
+            String key = prefix + i;
+            if (sounds.containsKey(key) && random.nextInt(++available) == 0) {
+                selected = key;
+            }
+        }
+        if (selected != null) playSfx(selected, volume);
+    }
+
+    public void playPlayerWalk() {
+        playRandomSfx("player_walk", 8);
+    }
+
+    public void playPlayerShoot() {
+        playRandomSfx("player_shoot", 6, 0.15f);
+    }
+
+    public void playPlayerJump() {
+        playSfx("player_jump");
+    }
+
+    public void playBulletImpact() {
+        playRandomSfx("bullet_impact", 2);
+    }
+
     public void playPlayerHit() {
-        int number = random.nextInt(2) + 1;
-        playSfx("player_hit" + number);
+        playRandomSfx("player_hit", 3);
     }
 
     public void playBgm() {
